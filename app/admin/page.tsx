@@ -22,13 +22,26 @@ export default function AdminPanel() {
     }
   }, []);
 
-  const handleAuth = () => {
-    if (password === process.env.NEXT_PUBLIC_ADMIN_PASSWORD) {
-      localStorage.setItem('adminAuth', 'true');
-      setIsAuthorized(true);
-      window.dispatchEvent(new Event('storage'));
-    } else {
-      alert('Contraseña incorrecta');
+  const handleAuth = async () => {
+    try {
+      const response = await fetch('/api/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        localStorage.setItem('adminAuth', 'true');
+        setIsAuthorized(true);
+        window.dispatchEvent(new Event('storage'));
+      } else {
+        alert('Contraseña incorrecta');
+      }
+    } catch (error) {
+      alert('Error al validar contraseña');
+      console.error(error);
     }
   };
 
