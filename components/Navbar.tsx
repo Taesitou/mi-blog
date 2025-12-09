@@ -2,22 +2,39 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useState, useEffect } from 'react';
 
 export default function Navbar() {
   const pathname = usePathname();
+  const [isAdmin, setIsAdmin] = useState(false);
 
-  const links = [
+  useEffect(() => {
+    const checkAuth = () => {
+      const auth = localStorage.getItem('adminAuth');
+      setIsAdmin(auth === 'true');
+    };
+
+    checkAuth();
+    window.addEventListener('storage', checkAuth);
+    
+    return () => window.removeEventListener('storage', checkAuth);
+  }, []);
+
+  const baseLinks = [
     { href: '/', label: 'Home' },
     { href: '/articles', label: 'Artículos' },
-    { href: '/admin', label: 'Admin' },
   ];
+
+  const links = isAdmin 
+    ? [...baseLinks, { href: '/admin', label: 'Admin' }]
+    : baseLinks;
 
   return (
     <nav className="bg-neutral-900 text-white">
       <div className="max-w-6xl mx-auto px-4">
         <div className="flex justify-between items-center h-16">
           <Link href="/" className="font-serif text-2xl font-bold">
-            Mi Blog
+            Tomas Espinosa
           </Link>
           
           <ul className="flex gap-8">

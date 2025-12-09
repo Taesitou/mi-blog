@@ -1,10 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
 export default function AdminPanel() {
   const router = useRouter();
+  const [isAuthorized, setIsAuthorized] = useState(false);
+  const [password, setPassword] = useState('');
   const [title, setTitle] = useState('');
   const [date, setDate] = useState('');
   const [category, setCategory] = useState('');
@@ -12,6 +14,54 @@ export default function AdminPanel() {
   const [content, setContent] = useState('');
   const [loading, setLoading] = useState(false);
   const [file, setFile] = useState<File | null>(null);
+
+  useEffect(() => {
+    const auth = localStorage.getItem('adminAuth');
+    if (auth === 'true') {
+      setIsAuthorized(true);
+    }
+  }, []);
+
+  const handleAuth = () => {
+    if (password === process.env.NEXT_PUBLIC_ADMIN_PASSWORD) {
+      localStorage.setItem('adminAuth', 'true');
+      setIsAuthorized(true);
+      window.dispatchEvent(new Event('storage'));
+    } else {
+      alert('Contraseña incorrecta');
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('adminAuth');
+    setIsAuthorized(false);
+    window.dispatchEvent(new Event('storage'));
+    router.push('/');
+  };
+
+  if (!isAuthorized) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="bg-white p-8 rounded-lg shadow-md w-96">
+          <h1 className="text-2xl font-bold mb-4 font-serif text-center">Acceso Restringido</h1>
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="Contraseña"
+            className="w-full p-3 border border-neutral-300 rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-neutral-400"
+            onKeyDown={(e) => e.key === 'Enter' && handleAuth()}
+          />
+          <button
+            onClick={handleAuth}
+            className="w-full bg-neutral-900 text-white p-3 rounded-lg hover:bg-neutral-800"
+          >
+            Entrar
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   const handleFileUpload = async () => {
     if (!file) return;
@@ -77,7 +127,15 @@ export default function AdminPanel() {
 
   return (
     <div className="max-w-4xl mx-auto p-8">
-      <h1 className="text-3xl font-bold mb-8 font-serif">Admin Panel</h1>
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-3xl font-bold font-serif">Admin Panel</h1>
+        <button
+          onClick={handleLogout}
+          className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700"
+        >
+          Cerrar Sesión
+        </button>
+      </div>
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
           <label className="block mb-2 font-semibold">Título</label>
