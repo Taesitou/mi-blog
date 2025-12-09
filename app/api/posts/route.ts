@@ -1,6 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
 import fs from 'fs/promises';
 import path from 'path';
+import { getAllArticles } from '@/lib/articles';
+
+export async function GET() {
+  try {
+    const articles = getAllArticles();
+    return NextResponse.json({ articles });
+  } catch (error) {
+    console.error('Error al obtener artículos:', error);
+    return NextResponse.json(
+      { error: 'Error al obtener artículos' },
+      { status: 500 }
+    );
+  }
+}
 
 export async function POST(request: NextRequest) {
   try {
