@@ -1,6 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import fs from 'fs/promises';
-import path from 'path';
 
 export async function POST(request: NextRequest) {
   try {
@@ -24,9 +22,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Leer el contenido del archivo
-    const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
-    const content = buffer.toString('utf-8');
+    const fileContent = await file.text();
 
     // Generar slug desde el nombre del archivo (sin extensión)
     const slug = fileName
@@ -37,33 +33,45 @@ export async function POST(request: NextRequest) {
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/(^-|-$)/g, '');
 
-    // Guardar en la carpeta articles
-    const articlesPath = path.join(process.cwd(), 'articles');
-    const filePath = path.join(articlesPath, `${slug}.mdx`);
+    // Subir a GitHub
+    const response = await fetch(
+      `https://api.github.com/repos/${process.env.GITHUB_REPO}/contents/articles/${slug}.mdx`,
+      {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${process.env.GITHUB_TOKEN}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: `Upload article: ${slug}`,
+          content: Buffer.from(fileContent).toString('base64'),
+          branch: process.env.GITHUB_BRANCH || 'main',
+        }),
+      }
+    );
 
-    // Verificar si el archivo ya existe
-    try {
-      await fs.access(filePath);
-      return NextResponse.json(
-        { error: 'Ya existe un artículo con ese nombre' },
-        { status: 409 }
-      );
-    } catch {
-      // El archivo no existe, podemos crearlo
+    if (!response.ok) {
+      const error = await response.json();
+      
+      if (response.status === 422) {
+        return NextResponse.json(
+          { error: 'Ya existe un artículo con ese nombre' },
+          { status: 409 }
+        );
+      }
+      
+      throw new Error(error.message);
     }
-
-    // Guardar el archivo
-    await fs.writeFile(filePath, content, 'utf-8');
 
     return NextResponse.json({
       success: true,
       slug,
-      message: 'Archivo subido exitosamente',
+      message: 'Archivo subido exitosamente. Vercel redesplegará automáticamente.',
     });
   } catch (error) {
-    console.error('Error al subir el archivo:', error);
+    console.error('Error al subir archivo:', error);
     return NextResponse.json(
-      { error: 'Error al subir el archivo' },
+      { error: 'Error al subir el archivo a GitHub' },
       { status: 500 }
     );
   }

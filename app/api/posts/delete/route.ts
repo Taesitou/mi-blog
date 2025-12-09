@@ -1,6 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import fs from 'fs/promises';
-import path from 'path';
 
 export async function DELETE(request: NextRequest) {
   try {
@@ -13,31 +11,54 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    // Buscar el archivo .mdx
-    const articlesPath = path.join(process.cwd(), 'articles');
-    const filePath = path.join(articlesPath, `${slug}.mdx`);
+    // Primero obtener el SHA del archivo (requerido por GitHub)
+    const getResponse = await fetch(
+      `https://api.github.com/repos/${process.env.GITHUB_REPO}/contents/articles/${slug}.mdx`,
+      {
+        headers: {
+          'Authorization': `Bearer ${process.env.GITHUB_TOKEN}`,
+        },
+      }
+    );
 
-    // Verificar si el archivo existe
-    try {
-      await fs.access(filePath);
-    } catch {
+    if (!getResponse.ok) {
       return NextResponse.json(
         { error: 'El artículo no existe' },
         { status: 404 }
       );
     }
 
-    // Eliminar el archivo
-    await fs.unlink(filePath);
+    const fileData = await getResponse.json();
+
+    // Eliminar archivo en GitHub
+    const deleteResponse = await fetch(
+      `https://api.github.com/repos/${process.env.GITHUB_REPO}/contents/articles/${slug}.mdx`,
+      {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${process.env.GITHUB_TOKEN}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: `Delete article: ${slug}`,
+          sha: fileData.sha,
+          branch: process.env.GITHUB_BRANCH || 'main',
+        }),
+      }
+    );
+
+    if (!deleteResponse.ok) {
+      throw new Error('Error al eliminar en GitHub');
+    }
 
     return NextResponse.json({
       success: true,
-      message: 'Artículo eliminado exitosamente',
+      message: 'Artículo eliminado exitosamente. Vercel redesplegará automáticamente.',
     });
   } catch (error) {
     console.error('Error al eliminar el artículo:', error);
     return NextResponse.json(
-      { error: 'Error al eliminar el artículo' },
+      { error: 'Error al eliminar el artículo de GitHub' },
       { status: 500 }
     );
   }

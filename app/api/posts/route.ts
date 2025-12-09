@@ -1,6 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import fs from 'fs/promises';
-import path from 'path';
 import { getAllArticles } from '@/lib/articles';
 
 export async function GET() {
@@ -46,33 +44,48 @@ summary: "${summary}"
 
 ${content}`;
 
-    // Guardar archivo en la carpeta articles
-    const articlesPath = path.join(process.cwd(), 'articles');
-    const filePath = path.join(articlesPath, `${slug}.mdx`);
+    // Hacer commit a GitHub
+    const response = await fetch(
+      `https://api.github.com/repos/${process.env.GITHUB_REPO}/contents/articles/${slug}.mdx`,
+      {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${process.env.GITHUB_TOKEN}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: `Add article: ${title}`,
+          content: Buffer.from(mdxContent).toString('base64'),
+          branch: process.env.GITHUB_BRANCH || 'main',
+        }),
+      }
+    );
 
-    // Verificar si el archivo ya existe
-    try {
-      await fs.access(filePath);
-      return NextResponse.json(
-        { error: 'Ya existe un artículo con ese título' },
-        { status: 409 }
-      );
-    } catch {
-      // El archivo no existe, podemos crearlo
+    if (!response.ok) {
+      const error = await response.json();
+      
+      if (response.status === 422) {
+        return NextResponse.json(
+          { error: 'Ya existe un artículo con ese título' },
+          { status: 409 }
+        );
+      }
+      
+      throw new Error(error.message);
     }
 
-    // Crear el archivo
-    await fs.writeFile(filePath, mdxContent, 'utf-8');
+    const data = await response.json();
 
     return NextResponse.json({
       success: true,
       slug,
-      message: 'Post creado exitosamente',
+      message: 'Post creado exitosamente. Vercel redesplegará automáticamente en unos segundos.',
+      data,
     });
   } catch (error) {
     console.error('Error al crear el post:', error);
     return NextResponse.json(
-      { error: 'Error al crear el post' },
+      { error: 'Error al crear el post en GitHub' },
       { status: 500 }
     );
   }
