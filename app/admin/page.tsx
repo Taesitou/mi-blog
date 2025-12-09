@@ -11,6 +11,37 @@ export default function AdminPanel() {
   const [summary, setSummary] = useState('');
   const [content, setContent] = useState('');
   const [loading, setLoading] = useState(false);
+  const [file, setFile] = useState<File | null>(null);
+
+  const handleFileUpload = async () => {
+    if (!file) return;
+
+    setLoading(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await fetch('/api/posts/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        alert(`Archivo subido exitosamente: ${data.slug}`);
+        setFile(null);
+        router.refresh();
+      } else {
+        alert(`Error: ${data.error}`);
+      }
+    } catch (error) {
+      alert('Error al subir el archivo');
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -118,10 +149,33 @@ export default function AdminPanel() {
             onClick={() => router.push('/')}
             className="bg-neutral-200 text-neutral-900 px-6 py-3 rounded-lg hover:bg-neutral-300"
           >
-            Volver al blog
-          </button>
+          Volver al blog
+        </button>
+      </div>
+    </form>
+
+    <div className="mt-12 pt-8 border-t border-neutral-300">
+      <h2 className="text-2xl font-bold mb-4 font-serif">O también subir archivo:</h2>
+      <div className="space-y-4">
+        <div>
+          <label className="block mb-2 font-semibold">Selecciona un archivo .md o .mdx</label>
+          <input
+            type="file"
+            accept=".md,.mdx"
+            onChange={(e) => setFile(e.target.files?.[0] || null)}
+            className="w-full p-3 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-neutral-400"
+          />
         </div>
-      </form>
+        <button
+          type="button"
+          onClick={handleFileUpload}
+          disabled={!file || loading}
+          className="bg-neutral-900 text-white px-6 py-3 rounded-lg hover:bg-neutral-800 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {loading ? 'Subiendo...' : 'Subir Archivo'}
+        </button>
+      </div>
     </div>
+  </div>
   );
 }

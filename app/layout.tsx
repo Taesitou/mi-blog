@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Poppins, Cormorant_Garamond } from "next/font/google";
 import "./globals.css";
+import Navbar from "@/components/Navbar";
 
 const cormorantGaramond = Cormorant_Garamond({
   subsets: ["latin"],
@@ -29,6 +30,7 @@ export default function RootLayout({
       <body
         className={`${poppins.variable} ${cormorantGaramond.variable} bg-neutral-100 antialiased`}
       >
+        <Navbar />
         {children}
       </body>
     </html>

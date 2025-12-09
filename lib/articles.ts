@@ -56,6 +56,20 @@ export const getCategorisedArticles = (): Record<string, ArticleItem[]> => {
 }
 
 
+export const getAllArticles = () => {
+    const sortedArticles = getSortedArticles();
+    
+    return sortedArticles.map((article) => ({
+        slug: article.id,
+        metadata: {
+            title: article.title,
+            publishedAt: article.date,
+            category: article.category,
+            summary: article.summary,
+        }
+    }));
+}
+
 export const getArticleData = async (id: string) => {
     const fullPath = path.join(articlesDirectory, `${id}.mdx`);
     const fileContents = fs.readFileSync(fullPath, "utf8");
