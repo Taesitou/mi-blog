@@ -10,20 +10,19 @@ interface Props{
 
 const ArticleItemList = ({ category, articles }: Props) =>{
     return (
-        <div className="flex flex-col gap-5">
-            <h2 className="font-poppins text-4xl">{category}</h2>
-            <div className="flex flex-col gap-2.5 font-poppins text-lg">
+        <div className="flex flex-col gap-3 bg-white rounded-lg shadow-sm p-4 mb-4 transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
+            <h2 className="font-poppins font-semibold text-xl">{category}</h2>
+            <div className="flex flex-col gap-1.5 font-poppins text-base">
                 {articles.map((article, id) => (
                     <Link
                         href={`/${article.id}`}
                         key={id}
-                        className="text-neutral-700 hover:text-amber-900 transition duration-150">
+                        className="text-neutral-600 hover:text-red-600 transition duration-150">
                         {article.title}
                     </Link>
                 ))}
 
             </div>
-
         </div>
     )
 }
