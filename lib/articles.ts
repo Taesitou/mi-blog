@@ -27,7 +27,6 @@ const getSortedArticles = (): ArticleItem[] => {
             title: matterResult.data.title,
             date: matterResult.data.publishedAt,
             category: matterResult.data.category,
-            summary: matterResult.data.summary,
         }
     })
 
@@ -65,7 +64,6 @@ export const getAllArticles = () => {
             title: article.title,
             publishedAt: article.date,
             category: article.category,
-            summary: article.summary,
         }
     }));
 }
@@ -88,6 +86,5 @@ export const getArticleData = async (id: string) => {
         title: matterResult.data.title,
         date: moment(matterResult.data.publishedAt).format("DD-MM-YYYY"),
         category: matterResult.data.category,
-        summary: matterResult.data.summary,
     }
 }

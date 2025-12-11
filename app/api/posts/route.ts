@@ -16,10 +16,10 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    const { title, date, category, summary, content } = await request.json();
+    const { title, date, category, content } = await request.json();
 
     // Validar campos requeridos
-    if (!title || !date || !category || !summary || !content) {
+    if (!title || !date || !category || !content) {
       return NextResponse.json(
         { error: 'Todos los campos son requeridos' },
         { status: 400 }
@@ -39,7 +39,6 @@ export async function POST(request: NextRequest) {
 title: "${title}"
 publishedAt: "${date}"
 category: "${category}"
-summary: "${summary}"
 ---
 
 ${content}`;
