@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { TrashIcon } from '@heroicons/react/24/solid';
+import { TrashIcon, PencilIcon } from '@heroicons/react/24/solid';
 
 type Article = {
   slug: string;
@@ -104,14 +104,24 @@ export default function ArticlesPage() {
               <time className="text-sm text-neutral-500">{article.metadata.publishedAt}</time>
             </Link>
             {isAdmin && (
-              <button
-                onClick={(e) => handleDelete(article.slug, e)}
-                disabled={deleting === article.slug}
-                className="absolute top-4 right-4 p-2 bg-red-600 text-white rounded-full hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                title="Eliminar artículo"
-              >
-                <TrashIcon className="w-5 h-5" />
-              </button>
+              <div className="absolute top-4 right-4 flex gap-2">
+                <Link
+                  href={`/admin/edit/${article.slug}`}
+                  className="p-2 bg-neutral-700 text-white rounded-full hover:bg-neutral-800 transition-colors"
+                  title="Editar artículo"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <PencilIcon className="w-5 h-5" />
+                </Link>
+                <button
+                  onClick={(e) => handleDelete(article.slug, e)}
+                  disabled={deleting === article.slug}
+                  className="p-2 bg-red-600 text-white rounded-full hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  title="Eliminar artículo"
+                >
+                  <TrashIcon className="w-5 h-5" />
+                </button>
+              </div>
             )}
           </div>
         ))}
