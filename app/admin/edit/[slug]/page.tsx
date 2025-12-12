@@ -15,6 +15,9 @@ export default function EditArticlePage({ params }: { params: Promise<{ slug: st
   const [date, setDate] = useState('');
   const [category, setCategory] = useState('');
   const [content, setContent] = useState('');
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [uploadedImages, setUploadedImages] = useState<string[]>([]);
 
   useEffect(() => {
     const auth = localStorage.getItem('adminAuth');
@@ -51,7 +54,36 @@ export default function EditArticlePage({ params }: { params: Promise<{ slug: st
 
     fetchArticle();
   }, [resolvedParams.slug, router]);
+  const handleImageUpload = async () => {
+    if (!imageFile) return;
 
+    setUploadingImage(true);
+    try {
+      const formData = new FormData();
+      formData.append('image', imageFile);
+
+      const response = await fetch('/api/images/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        const imageMarkdown = `![${imageFile.name}](${data.url})`;
+        setUploadedImages([...uploadedImages, imageMarkdown]);
+        alert(`Imagen subida: ${data.fileName}\n\nCopia esto en tu artículo:\n${imageMarkdown}`);
+        setImageFile(null);
+      } else {
+        alert(`Error: ${data.error}`);
+      }
+    } catch (error) {
+      alert('Error al subir la imagen');
+      console.error(error);
+    } finally {
+      setUploadingImage(false);
+    }
+  };
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
@@ -150,6 +182,39 @@ export default function EditArticlePage({ params }: { params: Promise<{ slug: st
             placeholder="# Título&#10;&#10;Tu contenido en markdown aquí..."
             required
           />
+        </div>
+
+        {/* Sección de subir imágenes */}
+        <div className="p-4 bg-neutral-50 rounded-lg border border-neutral-300">
+          <h3 className="font-semibold mb-3">Subir Imagen</h3>
+          <div className="flex gap-3 items-end">
+            <div className="flex-1">
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => setImageFile(e.target.files?.[0] || null)}
+                className="w-full p-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-neutral-400 text-sm"
+              />
+            </div>
+            <button
+              type="button"
+              onClick={handleImageUpload}
+              disabled={!imageFile || uploadingImage}
+              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+            >
+              {uploadingImage ? 'Subiendo...' : 'Subir Imagen'}
+            </button>
+          </div>
+          {uploadedImages.length > 0 && (
+            <div className="mt-3 p-3 bg-white rounded border border-neutral-200">
+              <p className="text-sm font-semibold mb-2">Imágenes subidas (copia y pega en el contenido):</p>
+              {uploadedImages.map((img, idx) => (
+                <div key={idx} className="mb-2">
+                  <code className="text-xs bg-neutral-100 p-2 rounded block break-all">{img}</code>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="flex gap-4">
